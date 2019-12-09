@@ -41,7 +41,7 @@ OSStatitics::OSStatitics()
 
 void OSStatitics::updateStep(int delayUs)
 {
-    if(delayUs == 0)
+    if(delayUs <= 340)
     {
         if (dirty)
         {
@@ -51,11 +51,13 @@ void OSStatitics::updateStep(int delayUs)
             EEPROM.read(address);
 
             Update ....
-            Serial.println("Non volative memory read and write");
 
+            Serial.println("Non volative memory read and write");
             EEPROM.write(address, value);
             EEPROM.commit();
 #endif             
+            Serial.println("Non volative memory read and write");
+            
             dirty = false;
             nMicroSeconds = 0;
             nSteps = 0;
@@ -63,7 +65,7 @@ void OSStatitics::updateStep(int delayUs)
             nSecondsUsed = 0;
         }
     }
-    else if(delayUs > 350)
+    else if (delayUs > 350)
     {
         dirty = true;
         nMicroSeconds += (delayUs * 2);
@@ -84,10 +86,9 @@ void OSStatitics::updateStep(int delayUs)
 
 
 // Defines pins numbers
-const int stepPin = 1; //D3
-const int dirPin = 2;  //D4
+const int stepPin = D4; //D3
+const int dirPin = D3;  //D4
 
-int customDelay,customDelayMapped; // Defines variables
 OSStatitics* osStatitics_p;
 
 void setup() {
@@ -104,14 +105,18 @@ void setup() {
 
 void loop() {
 
-  customDelayMapped = speedUp(); // Gets custom delay values from the custom speedUp function
+  int customDelayMapped = speedUp(); // Gets custom delay values from the custom speedUp function
   // Makes pules with custom delay, depending on the Potentiometer, from which the speed of the motor depends
   digitalWrite(stepPin, HIGH);
-  delayMicroseconds(customDelayMapped);
+  delay(customDelayMapped);
   digitalWrite(stepPin, LOW);
-  delayMicroseconds(customDelayMapped);
+  delay(customDelayMapped);
 
   osStatitics_p->updateStep(customDelayMapped);
+  Serial.print("customDelayMapped ");
+  Serial.print(customDelayMapped, DEC);
+  Serial.println("");
+
 }
 
 // Function for reading the Potentiometer
