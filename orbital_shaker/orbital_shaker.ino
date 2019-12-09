@@ -11,47 +11,6 @@
  GND
 so,the input voltage(A0) can be 3.2V, and the A0=3.2*ADC
  */
-
-
-
-// Defines pins numbers
-const int stepPin = 1; //D3
-const int dirPin = 2;  //D4
-
-int customDelay,customDelayMapped; // Defines variables
-
-void setup() {
-  // Sets the two pins as Outputs
-  pinMode(stepPin,OUTPUT);
-  pinMode(dirPin,OUTPUT);
-
-  digitalWrite(dirPin,HIGH); //Enables the motor to move in a particular direction
-
-  Serial.begin(115200);
-}
-
-
-void loop() {
-
-  customDelayMapped = speedUp(); // Gets custom delay values from the custom speedUp function
-  // Makes pules with custom delay, depending on the Potentiometer, from which the speed of the motor depends
-  digitalWrite(stepPin, HIGH);
-  delayMicroseconds(customDelayMapped);
-  digitalWrite(stepPin, LOW);
-  delayMicroseconds(customDelayMapped);
-}
-
-// Function for reading the Potentiometer
-int speedUp() {
-
-  int customDelay = analogRead(A0); // Reads the potentiometer
-  int newCustom = map(customDelay, 0, 1023, 300,4000); // Convrests the read values of the potentiometer from 0 to 1023 into desireded delay values (300 to 4000)
-
-  return newCustom;
-
-}
-
-
 class OSStatitics { 
     public:
        OSStatitics(); 
@@ -98,12 +57,16 @@ void OSStatitics::updateStep(int delayUs)
             EEPROM.commit();
 #endif             
             dirty = false;
+            nMicroSeconds = 0;
+            nSteps = 0;
+            nRevs = 0;
+            nSecondsUsed = 0;
         }
     }
-    else 
+    else if(delayUs > 350)
     {
         dirty = true;
-        nMicroSeconds++;
+        nMicroSeconds += (delayUs * 2);
         if (nMicroSeconds >= 1000000)
         {
             nSecondsUsed++;
@@ -116,4 +79,47 @@ void OSStatitics::updateStep(int delayUs)
           nSteps = 0;
         }
     }
+}
+
+
+
+// Defines pins numbers
+const int stepPin = 1; //D3
+const int dirPin = 2;  //D4
+
+int customDelay,customDelayMapped; // Defines variables
+OSStatitics* osStatitics_p;
+
+void setup() {
+  // Sets the two pins as Outputs
+  pinMode(stepPin,OUTPUT);
+  pinMode(dirPin,OUTPUT);
+
+  digitalWrite(dirPin,HIGH); //Enables the motor to move in a particular direction
+
+  Serial.begin(115200);
+  osStatitics_p = new OSStatitics();
+}
+
+
+void loop() {
+
+  customDelayMapped = speedUp(); // Gets custom delay values from the custom speedUp function
+  // Makes pules with custom delay, depending on the Potentiometer, from which the speed of the motor depends
+  digitalWrite(stepPin, HIGH);
+  delayMicroseconds(customDelayMapped);
+  digitalWrite(stepPin, LOW);
+  delayMicroseconds(customDelayMapped);
+
+  osStatitics_p->updateStep(customDelayMapped);
+}
+
+// Function for reading the Potentiometer
+int speedUp() {
+
+  int customDelay = analogRead(A0); // Reads the potentiometer
+  int newCustom = map(customDelay, 0, 1023, 300,4000); // Convrests the read values of the potentiometer from 0 to 1023 into desireded delay values (300 to 4000)
+
+  return newCustom;
+
 }
